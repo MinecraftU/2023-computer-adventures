@@ -28,22 +28,31 @@ pub fn get_engine_move(source_str: &str, target_str: &str) { // TODO: recieves a
     let target : Square = Square::from_str(target_str).unwrap();
 
     let result = make_move(source, target, &BOARD.lock().unwrap());
-    let engine_move = evaluate(&result).unwrap();
-    let result2 = make_move(engine_move.get_source(), engine_move.get_dest(), &result);
-    *BOARD.lock().unwrap() = result2;
-    update_board(&result2.to_string());
+    match result {
+        Ok(_) => (),
+        Err(_) => {update_board(&BOARD.lock().unwrap().to_string()); return;},
+    }
+    let engine_move = evaluate(&result.unwrap()).unwrap();
+    let engine_result = make_move(engine_move.get_source(), engine_move.get_dest(), &result.unwrap());
+    match engine_result {
+        Ok(_) => (),
+        Err(_) => panic!("engine made illegal move"),
+    }
+    *BOARD.lock().unwrap() = engine_result.unwrap();
+    update_board(&engine_result.unwrap().to_string());
 }
 
 fn evaluate(board : &Board) -> Option<ChessMove> { // returns the first legal move based on the board (will implement algorithm to return the "best" move later)
     return MoveGen::new_legal(&board).next();
 }
 
-fn make_move(from : Square, to : Square, board : &Board) -> Board {
+fn make_move(from : Square, to : Square, board : &Board) -> Result<Board, &'static str> {
     let mut result = *board;
     let chess_move = ChessMove::new(from, to, None);
     if !board.legal(chess_move) {
-        println!("note: illegal move made");
+        my_alert("RUST: illegal move made");
+        return Err("illegal move made");
     }
     board.make_move(chess_move, &mut result);
-    return result;
+    return Ok(result);
 }
