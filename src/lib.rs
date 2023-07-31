@@ -2,7 +2,7 @@
 //use chess::{Board, Square, Color};
 //use std::str::FromStr;
 //use chess::EMPTY;
-use chess::{Board, ChessMove, Square, MoveGen};
+use chess::{Piece, Board, ChessMove, Square, MoveGen};
 use wasm_bindgen::prelude::*;
 use std::str::FromStr;
 use std::sync::Mutex;
@@ -21,11 +21,18 @@ extern {
 }
 
 #[wasm_bindgen]
-pub fn get_engine_move(source_str: &str, target_str: &str) -> String { // TODO: recieves a player move and returns an FEN containing the new position with the engine move as a response
+pub fn get_engine_move(source_str: &str, target_str: &str, promotion_str: &str) -> String { // TODO: recieves a player move and returns an FEN containing the new position with the engine move as a response
     let source : Square = Square::from_str(source_str).unwrap();
     let target : Square = Square::from_str(target_str).unwrap();
+    let promotion : Option<Piece> = match promotion_str {
+        "n" => Some(Piece::Knight),
+        "q" => Some(Piece::Queen),
+        "b" => Some(Piece::Bishop),
+        "r" => Some(Piece::Rook),
+        _ => None,
+    };
 
-    let result = make_move(ChessMove::new(source, target, None), &BOARD.lock().unwrap());
+    let result = make_move(ChessMove::new(source, target, promotion), &BOARD.lock().unwrap());
     match result {
         Ok(_) => (),
         Err(_) => return "illegal move".to_string(),
@@ -37,7 +44,7 @@ pub fn get_engine_move(source_str: &str, target_str: &str) -> String { // TODO: 
         Err(_) => panic!("engine made illegal move"),
     }
     *BOARD.lock().unwrap() = engine_result.unwrap();
-    return format!("{}-{}", engine_move.get_source(), engine_move.get_dest()).into();
+    return engine_result.unwrap().to_string();
 }
 
 fn evaluate(board : &Board) -> Option<ChessMove> { // returns the first legal move based on the board (will implement algorithm to return the "best" move later)
