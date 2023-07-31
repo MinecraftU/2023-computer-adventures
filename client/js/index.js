@@ -1,6 +1,6 @@
 import init, { get_engine_move } from "../pkg/chess_engine.js";
 
-function wait_until(source, target, oldPos) { // https://stackoverflow.com/a/64947598
+function wait_until(source, target, oldPos) { // https://stackoverflow.com/a/22125915
     if (!window.promotion) {
         window.setTimeout(wait_until, 100, source, target, oldPos);
     } else {
