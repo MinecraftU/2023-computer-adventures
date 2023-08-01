@@ -1,11 +1,10 @@
-//use chess::MoveGen;
-//use chess::{Board, Square, Color};
-//use std::str::FromStr;
-//use chess::EMPTY;
-use chess::{Piece, Board, ChessMove, Square, MoveGen};
+use chess::{Piece, Board, ChessMove, Square};
 use wasm_bindgen::prelude::*;
 use std::str::FromStr;
 use std::sync::Mutex;
+
+mod search;
+mod evaluate;
 
 #[macro_use]
 extern crate lazy_static;
@@ -17,7 +16,6 @@ lazy_static! {
 #[wasm_bindgen(module="/client/js/output.js")]
 extern {
     pub fn my_alert(s: &str);
-    pub fn update_board(s: &str);
 }
 
 #[wasm_bindgen]
@@ -37,7 +35,7 @@ pub fn get_engine_move(source_str: &str, target_str: &str, promotion_str: &str) 
         Ok(_) => (),
         Err(_) => return "illegal move".to_string(),
     }
-    let engine_move = evaluate(&result.unwrap()).unwrap();
+    let engine_move = search::search(&result.unwrap()).unwrap();
     let engine_result = make_move(engine_move, &result.unwrap());
     match engine_result {
         Ok(_) => (),
@@ -45,10 +43,6 @@ pub fn get_engine_move(source_str: &str, target_str: &str, promotion_str: &str) 
     }
     *BOARD.lock().unwrap() = engine_result.unwrap();
     return engine_result.unwrap().to_string();
-}
-
-fn evaluate(board : &Board) -> Option<ChessMove> { // returns the first legal move based on the board (will implement algorithm to return the "best" move later)
-    return MoveGen::new_legal(&board).next();
 }
 
 fn make_move(chess_move : ChessMove, board : &Board) -> Result<Board, &'static str> {
