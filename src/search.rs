@@ -28,7 +28,7 @@ pub fn alpha_beta_max(mut alpha : f32, mut beta : f32, depth : i32, board : &Boa
 
 pub fn alpha_beta_min(mut alpha : f32, mut beta : f32, depth : i32, board : &Board) -> f32 {
     if depth == 0 {
-        return -evaluate::evaluate(board);
+        return evaluate::evaluate(board);
     };
     for chess_move in MoveGen::new_legal(&board) {
         let mut result = *board;
@@ -82,7 +82,7 @@ pub fn search(board : &Board) -> Option<ChessMove> {
     for chess_move in MoveGen::new_legal(&board) {
         let mut result = *board;
         board.make_move(chess_move, &mut result);
-        let score: f32 = mini(3, &result);
+        let score: f32 = alpha_beta_min(f32::MIN, f32::MAX, 3, &result);
         if score > max {
             max = score;
             best_move = Some(chess_move);
@@ -90,3 +90,18 @@ pub fn search(board : &Board) -> Option<ChessMove> {
     }
     return best_move;
 }
+
+#[cfg(test)]
+mod tests {
+    use std::str::FromStr;
+    use chess::Square;
+
+    use super::*;
+
+    #[test]
+    fn takes_hanging_queen() {
+        let board : Board = Board::from_str("rnbqkb1r/pppppppp/5n2/8/4P1Q1/8/PPPP1PPP/RNB1KBNR b KQkq - 0 1").unwrap();
+        assert_eq!(search(&board).unwrap(), ChessMove::new(Square::F6, Square::G4, None));
+    }
+}
+
