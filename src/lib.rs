@@ -1,11 +1,10 @@
-//use chess::MoveGen;
-//use chess::{Board, Square, Color};
-//use std::str::FromStr;
-//use chess::EMPTY;
-use chess::{Piece, Board, ChessMove, Square, MoveGen};
+use chess::{Piece, Board, ChessMove, Square};
 use wasm_bindgen::prelude::*;
 use std::str::FromStr;
 use std::sync::Mutex;
+
+mod search;
+mod evaluate;
 
 #[macro_use]
 extern crate lazy_static;
@@ -17,7 +16,6 @@ lazy_static! {
 #[wasm_bindgen(module="/client/js/output.js")]
 extern {
     pub fn my_alert(s: &str);
-    pub fn update_board(s: &str);
 }
 
 #[wasm_bindgen]
@@ -37,7 +35,7 @@ pub fn get_engine_move(source_str: &str, target_str: &str, promotion_str: &str) 
         Ok(_) => (),
         Err(_) => return "illegal move".to_string(),
     }
-    let engine_move = evaluate(&result.unwrap()).unwrap();
+    let engine_move = search::search(&result.unwrap()).unwrap();
     let engine_result = make_move(engine_move, &result.unwrap());
     match engine_result {
         Ok(_) => (),
@@ -45,10 +43,6 @@ pub fn get_engine_move(source_str: &str, target_str: &str, promotion_str: &str) 
     }
     *BOARD.lock().unwrap() = engine_result.unwrap();
     return engine_result.unwrap().to_string();
-}
-
-fn evaluate(board : &Board) -> Option<ChessMove> { // returns the first legal move based on the board (will implement algorithm to return the "best" move later)
-    return MoveGen::new_legal(&board).next();
 }
 
 fn make_move(chess_move : ChessMove, board : &Board) -> Result<Board, &'static str> {
@@ -59,4 +53,38 @@ fn make_move(chess_move : ChessMove, board : &Board) -> Result<Board, &'static s
     }
     board.make_move(chess_move, &mut result);
     return Ok(result);
+}
+
+
+#[cfg(test)]
+mod tests {
+    use pprof;
+    use std::str::FromStr;
+    use pprof::protos::Message;
+    use std::fs::File;
+    use std::io::Write;
+
+    use super::*;
+
+    #[test]
+    fn benchmark() {
+        let guard = pprof::ProfilerGuard::new(1000).unwrap();
+
+        *BOARD.lock().unwrap() = Board::from_str("r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 0 1").unwrap();
+        println!("{}", get_engine_move("b1", "c3", ""));
+
+        match guard.report().build() {
+            Ok(report) => {
+                let mut file = File::create("profile.pb").unwrap();
+                let profile = report.pprof().unwrap();
+
+                let mut content = Vec::new();
+                profile.encode(&mut content).unwrap();
+                file.write_all(&content).unwrap();
+
+                println!("report: {}", &report);
+            }
+            Err(_) => {}
+        }
+    }
 }

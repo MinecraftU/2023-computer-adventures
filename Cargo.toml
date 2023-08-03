@@ -10,5 +10,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 chess = "3.2.0"
+counter = "0.5.7"
 lazy_static = "1.4.0"
 wasm-bindgen = "0.2"
+pprof = { version = "0.3", features = ["protobuf"] }
