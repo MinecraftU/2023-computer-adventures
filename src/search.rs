@@ -62,7 +62,7 @@ pub fn maxi(depth : i32, board : &Board) -> f32 { // black, engine
 
 pub fn mini(depth : i32, board : &Board) -> f32 {
     if depth == 0 {
-        return -evaluate::evaluate(board);
+        return evaluate::evaluate(board);
     };
     let mut min: f32 = f32::MAX;
     for chess_move in MoveGen::new_legal(&board) {
