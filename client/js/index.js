@@ -1,37 +1,45 @@
 import init, { get_engine_move } from "../pkg/chess_engine.js";
 
-function wait_until(source, target, oldPos) { // https://stackoverflow.com/a/22125915
-    if (!window.promotion) {
-        window.setTimeout(wait_until, 100, source, target, oldPos);
-    } else {
-        console.log("JS: done waiting for player to choose promotion piece");
-        make_move(source, target, oldPos);
-        window.promotion = null;
-    }
+document.getElementById("queenPromoButton").addEventListener("click", () => {
+    handlePromotion('q')
+}, false);
+document.getElementById("rookPromoButton").addEventListener("click", () => {
+    handlePromotion('r')
+}, false);
+document.getElementById("bishopPromoButton").addEventListener("click", () => {
+    handlePromotion('b')
+}, false);
+document.getElementById("knightPromoButton").addEventListener("click", () => {
+    handlePromotion('n')
+}, false);
+
+let promotionData;
+
+function handlePromotion(piece) {
+    closePromotionModal();
+    let { source, target, oldPos } = promotionData;
+    makeMove(source, target, oldPos, piece);
 }
 
-function make_move(source, target, oldPos) {
-    let new_position = get_engine_move(source, target, window.promotion || "");;
-    console.log("js: returned engine move:", new_position);
-    if (new_position === "illegal move") {
-        window.board.position(oldPos);
-    } else {
-        window.board.position(new_position);
-    }
+function openPromotionModal() {
+    console.log("JS: open modal");
+    document.getElementById("promotionModal").style.display = "block";
+}
+
+function closePromotionModal() {
+    document.getElementById("promotionModal").style.display = "none";
 }
 
 function onDrop(source, target, piece, newPos, oldPos, orientation) {
     console.log('JS: Source: ' + source, 'Target: ' + target);
-
-    init().then(() => {
-        if (target[1] === "8" && piece === "wP") { // player must promote
-            document.getElementById("promotion-choice").style.display = "block";
-            wait_until(source, target, oldPos);
-            return;
-        }
-
-        make_move(source, target, oldPos);
-    });
+    console.log("piece: ", piece);
+    if (source[1] == 7 && piece == "wP") { // promotion
+        promotionData = { source: source, target: target, oldPos: oldPos };
+        openPromotionModal();
+    }
+    else { // not a promotion
+        makeMove(source, target, oldPos, "");
+    }
 }
 
 let config = {
@@ -41,3 +49,15 @@ let config = {
     sparepieces: true
 }
 window.board = Chessboard('myBoard', config);
+
+function makeMove(source, target, oldPos, promo) {
+    init().then(() => {
+        let engine_output = get_engine_move(source, target, promo);
+        console.log("JS: returned engine move:", engine_output);
+        if (engine_output === "illegal move") {
+            window.board.position(oldPos);
+        } else {
+            window.board.position(engine_output);
+        }
+    });
+}
