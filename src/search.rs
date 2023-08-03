@@ -82,7 +82,7 @@ pub fn search(board : &Board) -> Option<ChessMove> {
     for chess_move in MoveGen::new_legal(&board) {
         let mut result = *board;
         board.make_move(chess_move, &mut result);
-        let score: f32 = alpha_beta_min(f32::MIN, f32::MAX, 3, &result);
+        let score: f32 = mini(3, &result);
         if score > max {
             max = score;
             best_move = Some(chess_move);

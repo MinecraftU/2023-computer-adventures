@@ -54,3 +54,37 @@ fn make_move(chess_move : ChessMove, board : &Board) -> Result<Board, &'static s
     board.make_move(chess_move, &mut result);
     return Ok(result);
 }
+
+
+#[cfg(test)]
+mod tests {
+    use pprof;
+    use std::str::FromStr;
+    use pprof::protos::Message;
+    use std::fs::File;
+    use std::io::Write;
+
+    use super::*;
+
+    #[test]
+    fn benchmark() {
+        let guard = pprof::ProfilerGuard::new(1000).unwrap();
+
+        *BOARD.lock().unwrap() = Board::from_str("r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 0 1").unwrap();
+        println!("{}", get_engine_move("b1", "c3", ""));
+
+        match guard.report().build() {
+            Ok(report) => {
+                let mut file = File::create("profile.pb").unwrap();
+                let profile = report.pprof().unwrap();
+
+                let mut content = Vec::new();
+                profile.encode(&mut content).unwrap();
+                file.write_all(&content).unwrap();
+
+                println!("report: {}", &report);
+            }
+            Err(_) => {}
+        }
+    }
+}
