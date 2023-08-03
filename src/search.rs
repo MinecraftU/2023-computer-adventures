@@ -1,50 +1,78 @@
-use wasm_bindgen::prelude::*;
 use chess::{Board, ChessMove, MoveGen};
+use std::{collections::HashMap, hash::Hash};
+use wasm_bindgen::prelude::*;
 
 use crate::evaluate;
 
-#[wasm_bindgen(module="/client/js/output.js")]
-extern {
+#[wasm_bindgen(module = "/client/js/output.js")]
+extern "C" {
     pub fn my_alert(s: &str);
 }
 
-pub fn alpha_beta_max(mut alpha : f32, mut beta : f32, depth : i32, board : &Board) -> f32 { // black, engine
+pub fn alpha_beta_max(mut alpha: f32, beta: f32, depth: i32, board: &Board, t_table: &mut HashMap<Board, f32>) -> f32 {
+    // black, engine
     if depth == 0 {
         return evaluate::evaluate(board);
     };
+
     for chess_move in MoveGen::new_legal(&board) {
         let mut result = *board;
         board.make_move(chess_move, &mut result);
-        let score: f32 = alpha_beta_min(alpha, beta, depth - 1, &result);
-        if score >= beta {
+
+        // generate new score or access cached value
+        let cached = t_table.contains_key(&result);
+        let to_insert = if cached {
+            None
+        } else {
+            Some(alpha_beta_min(alpha, beta, depth - 1, &result, t_table))
+        };
+        let score = match to_insert {
+            None => &t_table[&result],
+            Some(r) => t_table.entry(result).or_insert(r),
+        };
+
+        if *score >= beta {
             return beta;
         }
-        if score > alpha {
-            alpha = score;
+        if *score > alpha {
+            alpha = *score;
         }
     }
     return alpha;
 }
 
-pub fn alpha_beta_min(mut alpha : f32, mut beta : f32, depth : i32, board : &Board) -> f32 {
+pub fn alpha_beta_min(alpha: f32, mut beta: f32, depth: i32, board: &Board, t_table: &mut HashMap<Board, f32> ) -> f32 {
     if depth == 0 {
         return evaluate::evaluate(board);
     };
     for chess_move in MoveGen::new_legal(&board) {
         let mut result = *board;
         board.make_move(chess_move, &mut result);
-        let score: f32 = alpha_beta_max(alpha, beta, depth - 1, &result);
-        if score <= alpha {
+
+        // generate new score or access cached value
+        let cached = t_table.contains_key(&result);
+        let to_insert = if cached {
+            None
+        } else {
+            Some(alpha_beta_max(alpha, beta, depth - 1, &result, t_table))
+        };
+        let score = match to_insert {
+            None => &t_table[&result],
+            Some(r) => t_table.entry(result).or_insert(r),
+        };
+
+        if *score <= alpha {
             return alpha;
         }
-        if score < beta {
-            beta = score;
+        if *score < beta {
+            beta = *score;
         }
     }
     return beta;
 }
 
-pub fn maxi(depth : i32, board : &Board) -> f32 { // black, engine
+pub fn maxi(depth: i32, board: &Board) -> f32 {
+    // black, engine
     if depth == 0 {
         return evaluate::evaluate(board);
     };
@@ -60,7 +88,7 @@ pub fn maxi(depth : i32, board : &Board) -> f32 { // black, engine
     return max;
 }
 
-pub fn mini(depth : i32, board : &Board) -> f32 {
+pub fn mini(depth: i32, board: &Board) -> f32 {
     if depth == 0 {
         return evaluate::evaluate(board);
     };
@@ -76,13 +104,15 @@ pub fn mini(depth : i32, board : &Board) -> f32 {
     return min;
 }
 
-pub fn search(board : &Board) -> Option<ChessMove> {
+pub fn search(board: &Board) -> Option<ChessMove> {
+    let mut t_table: HashMap<Board, f32> = HashMap::new(); // transposition table: https://www.chessprogramming.org/Transposition_Table
+
     let mut best_move: Option<ChessMove> = None;
     let mut max: f32 = f32::MIN;
     for chess_move in MoveGen::new_legal(&board) {
         let mut result = *board;
         board.make_move(chess_move, &mut result);
-        let score: f32 = alpha_beta_min(f32::MIN, f32::MAX, 3, &result);
+        let score: f32 = alpha_beta_min(f32::MIN, f32::MAX, 3, &result, &mut t_table);
         if score > max {
             max = score;
             best_move = Some(chess_move);
@@ -93,15 +123,19 @@ pub fn search(board : &Board) -> Option<ChessMove> {
 
 #[cfg(test)]
 mod tests {
-    use std::str::FromStr;
     use chess::Square;
+    use std::str::FromStr;
 
     use super::*;
 
     #[test]
     fn takes_hanging_queen() {
-        let board : Board = Board::from_str("rnbqkb1r/pppppppp/5n2/8/4P1Q1/8/PPPP1PPP/RNB1KBNR b KQkq - 0 1").unwrap();
-        assert_eq!(search(&board).unwrap(), ChessMove::new(Square::F6, Square::G4, None));
+        let board: Board =
+            Board::from_str("rnbqkb1r/pppppppp/5n2/8/4P1Q1/8/PPPP1PPP/RNB1KBNR b KQkq - 0 1")
+                .unwrap();
+        assert_eq!(
+            search(&board).unwrap(),
+            ChessMove::new(Square::F6, Square::G4, None)
+        );
     }
 }
-
