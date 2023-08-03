@@ -1,6 +1,5 @@
 use wasm_bindgen::prelude::*;
-use counter::Counter;
-use chess::{Board, Piece, Color};
+use chess::{Piece, Color};
 
 #[wasm_bindgen(module="/client/js/output.js")]
 extern {
@@ -15,7 +14,6 @@ fn weight_of(piece : Piece) -> f32 {
         Piece::Bishop => 3.0,
         Piece::Knight => 3.0,
         Piece::Pawn => 1.0,
-        _ => 0.0,
     };
 }
 
@@ -37,6 +35,7 @@ pub fn evaluate(board : &chess::Board) -> f32 { // evaluation is for black becau
 #[cfg(test)]
 mod tests {
     use std::str::FromStr;
+    use chess::Board;
 
     use super::*;
 

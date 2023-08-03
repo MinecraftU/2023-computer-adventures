@@ -8,7 +8,7 @@ extern {
     pub fn my_alert(s: &str);
 }
 
-pub fn alpha_beta_max(mut alpha : f32, mut beta : f32, depth : i32, board : &Board) -> f32 { // black, engine
+pub fn alpha_beta_max(mut alpha : f32, beta : f32, depth : i32, board : &Board) -> f32 { // black, engine
     if depth == 0 {
         return evaluate::evaluate(board);
     };
@@ -26,7 +26,7 @@ pub fn alpha_beta_max(mut alpha : f32, mut beta : f32, depth : i32, board : &Boa
     return alpha;
 }
 
-pub fn alpha_beta_min(mut alpha : f32, mut beta : f32, depth : i32, board : &Board) -> f32 {
+pub fn alpha_beta_min(alpha : f32, mut beta : f32, depth : i32, board : &Board) -> f32 {
     if depth == 0 {
         return evaluate::evaluate(board);
     };
