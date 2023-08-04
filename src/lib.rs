@@ -1,4 +1,4 @@
-use chess::{Piece, Board, ChessMove, Square};
+use chess::{Piece, Board, ChessMove, Square, MoveGen};
 use wasm_bindgen::prelude::*;
 use std::str::FromStr;
 use std::sync::Mutex;
@@ -35,12 +35,31 @@ pub fn get_engine_move(source_str: &str, target_str: &str, promotion_str: &str) 
         Ok(_) => (),
         Err(_) => return "illegal move".to_string(),
     }
-    let engine_move = search::search(&result.unwrap()).unwrap();
+
+    let engine_move_option = search::search(&result.unwrap());
+    if engine_move_option == None {
+        if result.unwrap().checkers().popcnt() == 0 {
+            return String::from("stalemate");
+        } else {
+            return String::from("checkmate, player won");
+        }
+    } 
+
+    let engine_move = engine_move_option.unwrap();
     let engine_result = make_move(engine_move, &result.unwrap());
     match engine_result {
         Ok(_) => (),
         Err(_) => panic!("engine made illegal move"),
     }
+    
+    if MoveGen::new_legal(&engine_result.unwrap()).len() == 0 {
+        if engine_result.unwrap().checkers().popcnt() == 0 {
+            return String::from("stalemate");
+        } else {
+            return format!("checkmate, engine won;{}", engine_result.unwrap().to_string());
+        }
+    }
+
     *BOARD.lock().unwrap() = engine_result.unwrap();
     return engine_result.unwrap().to_string();
 }
