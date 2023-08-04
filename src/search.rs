@@ -1,5 +1,7 @@
 use chess::{Board, ChessMove, MoveGen};
-use std::{collections::HashMap, hash::Hash};
+use std::collections::HashMap;
+extern crate queues;
+use queues::*;
 use wasm_bindgen::prelude::*;
 
 use crate::evaluate;
@@ -9,7 +11,7 @@ extern "C" {
     pub fn my_alert(s: &str);
 }
 
-pub fn alpha_beta_max(mut alpha: f32, beta: f32, depth: i32, board: &Board, t_table: &mut HashMap<Board, f32>) -> f32 {
+pub fn alpha_beta_max(mut alpha: f32, beta: f32, depth: i32, board: &Board, t_table: &mut HashMap<Board, f32>, t_buf : &mut Buffer<Board>) -> f32 {
     // black, engine
     if depth == 0 {
         return evaluate::evaluate(board);
@@ -20,11 +22,12 @@ pub fn alpha_beta_max(mut alpha: f32, beta: f32, depth: i32, board: &Board, t_ta
         board.make_move(chess_move, &mut result);
 
         // generate new score or access cached value
+        {}
         let cached = t_table.contains_key(&result);
         let to_insert = if cached {
             None
         } else {
-            Some(alpha_beta_min(alpha, beta, depth - 1, &result, t_table))
+            Some(alpha_beta_min(alpha, beta, depth - 1, &result, t_table, t_buf))
         };
         let score = match to_insert {
             None => &t_table[&result],
@@ -37,11 +40,27 @@ pub fn alpha_beta_max(mut alpha: f32, beta: f32, depth: i32, board: &Board, t_ta
         if *score > alpha {
             alpha = *score;
         }
+
+        if to_insert != None {
+            if t_buf.size() == t_buf.capacity() {
+                let oldest_board_result = t_buf.remove();
+                match oldest_board_result {
+                    Ok(_) => {
+                        t_table.remove(&oldest_board_result.unwrap());
+                    },
+                    Err(_) => { }
+                };
+            }
+            match t_buf.add(result) {
+                Ok(_) => (),
+                Err(_) => my_alert("adding to buffer failed"),
+            };
+        }
     }
     return alpha;
 }
 
-pub fn alpha_beta_min(alpha: f32, mut beta: f32, depth: i32, board: &Board, t_table: &mut HashMap<Board, f32> ) -> f32 {
+pub fn alpha_beta_min(alpha: f32, mut beta: f32, depth: i32, board: &Board, t_table: &mut HashMap<Board, f32>, t_buf : &mut Buffer<Board> ) -> f32 {
     if depth == 0 {
         return evaluate::evaluate(board);
     };
@@ -54,7 +73,7 @@ pub fn alpha_beta_min(alpha: f32, mut beta: f32, depth: i32, board: &Board, t_ta
         let to_insert = if cached {
             None
         } else {
-            Some(alpha_beta_max(alpha, beta, depth - 1, &result, t_table))
+            Some(alpha_beta_max(alpha, beta, depth - 1, &result, t_table, t_buf))
         };
         let score = match to_insert {
             None => &t_table[&result],
@@ -66,6 +85,22 @@ pub fn alpha_beta_min(alpha: f32, mut beta: f32, depth: i32, board: &Board, t_ta
         }
         if *score < beta {
             beta = *score;
+        }
+
+        if to_insert != None {
+            if t_buf.size() == t_buf.capacity() {
+                let oldest_board_result = t_buf.remove();
+                match oldest_board_result {
+                    Ok(_) => {
+                        t_table.remove(&oldest_board_result.unwrap());
+                    },
+                    Err(_) => { }
+                };
+            }
+            match t_buf.add(result) {
+                Ok(_) => (),
+                Err(_) => my_alert("adding to buffer failed"),
+            };
         }
     }
     return beta;
@@ -105,6 +140,8 @@ pub fn mini(depth: i32, board: &Board) -> f32 {
 }
 
 pub fn search(board: &Board) -> Option<ChessMove> {
+    let size : usize = 50000;
+    let mut t_buf: Buffer<Board> = Buffer::new(size);
     let mut t_table: HashMap<Board, f32> = HashMap::new(); // transposition table: https://www.chessprogramming.org/Transposition_Table
 
     let mut best_move: Option<ChessMove> = None;
@@ -112,7 +149,7 @@ pub fn search(board: &Board) -> Option<ChessMove> {
     for chess_move in MoveGen::new_legal(&board) {
         let mut result = *board;
         board.make_move(chess_move, &mut result);
-        let score: f32 = alpha_beta_min(f32::MIN, f32::MAX, 3, &result, &mut t_table);
+        let score: f32 = alpha_beta_min(f32::MIN, f32::MAX, 7, &result, &mut t_table, &mut t_buf);
         if score > max {
             max = score;
             best_move = Some(chess_move);

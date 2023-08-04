@@ -68,7 +68,7 @@ mod tests {
 
     #[test]
     fn benchmark() {
-        let guard = pprof::ProfilerGuard::new(1000).unwrap();
+        let guard = pprof::ProfilerGuard::new(10).unwrap();
 
         *BOARD.lock().unwrap() = Board::from_str("r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 0 1").unwrap();
         println!("{}", get_engine_move("b1", "c3", ""));
