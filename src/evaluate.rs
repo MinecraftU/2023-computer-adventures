@@ -1,5 +1,7 @@
 use wasm_bindgen::prelude::*;
-use chess::{Piece, Color};
+use chess::{Piece, Color, Board, MoveGen, BoardBuilder};
+
+use crate::make_move;
 
 #[wasm_bindgen(module="/client/js/output.js")]
 extern {
@@ -17,8 +19,7 @@ fn weight_of(piece : Piece) -> f32 {
     };
 }
 
-// https://www.chessprogramming.org/Evaluation
-pub fn evaluate(board : &chess::Board) -> f32 { // evaluation is for black because the engine is black
+fn material(board : &Board) -> f32 {
     let mut score : f32 = 0.0; 
 
     for piece_type in chess::ALL_PIECES {
@@ -32,6 +33,22 @@ pub fn evaluate(board : &chess::Board) -> f32 { // evaluation is for black becau
     score
 }
 
+fn mobility(board : &Board) -> f32 {
+    let black_mobility = MoveGen::new_legal(&board).len() as f32;
+    let new_board = board.null_move();
+    if new_board == None {
+        return 0.0;
+    }
+    let white_mobility = MoveGen::new_legal(&new_board.unwrap()).len() as f32;
+
+    black_mobility - white_mobility
+}
+
+// https://www.chessprogramming.org/Evaluation
+pub fn evaluate(board : &chess::Board) -> f32 { // evaluation is for black because the engine is black
+    material(board) + 0.1 * mobility(board) 
+}
+
 #[cfg(test)]
 mod tests {
     use std::str::FromStr;
@@ -41,24 +58,24 @@ mod tests {
 
     #[test]
     fn default_board() {
-        assert_eq!(0.0, evaluate(&Board::default()));
+        assert_eq!(0.0, evaluate(&Board::default().null_move().unwrap()));
     }
 
     #[test]
     fn king_vs_king() {
-        let board : Board = Board::from_str("4k3/8/8/8/8/8/8/4K3 w - - 0 1").unwrap();
+        let board : Board = Board::from_str("4k3/8/8/8/8/8/8/4K3 b - - 0 1").unwrap();
         assert_eq!(0.0, evaluate(&board));
     }
 
     #[test]
     fn endgame_with_queen_down() {
-        let board : Board = Board::from_str("5k2/4pr1p/8/8/8/6PP/8/3RK1Q1 w - - 0 1").unwrap();
-        assert_eq!(-9.0, evaluate(&board));
+        let board : Board = Board::from_str("5k2/4pr1p/8/8/8/6PP/8/3RK1Q1 b - - 0 1").unwrap();
+        assert_eq!(-10.0, evaluate(&board));
     }
 
     #[test]
     fn endgame_with_queen_up() {
-        let board : Board = Board::from_str("5k1q/4pr1p/8/8/8/6PP/8/3RK3 w - - 0 1").unwrap();
-        assert_eq!(9.0, evaluate(&board));
+        let board : Board = Board::from_str("5k1q/4pr1p/8/8/8/6PP/8/3RK3 b - - 0 1").unwrap();
+        assert_eq!(9.8, evaluate(&board));
     }
 }
