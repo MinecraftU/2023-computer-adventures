@@ -11,8 +11,8 @@ extern {
 }
 
 #[wasm_bindgen]
-pub fn get_engine_move(board : &str, source_str: &str, target_str: &str, promotion_str: &str) -> String { // TODO: recieves a player move and returns an FEN containing the new position with the engine move as a response
-    let board : Board = Board::from_str(board).unwrap();
+pub fn get_engine_move(board_str : &str, source_str: &str, target_str: &str, promotion_str: &str) -> String { // TODO: recieves a player move and returns an FEN containing the new position with the engine move as a response
+    let board : Board = Board::from_str(board_str).unwrap();
     let source : Square = Square::from_str(source_str).unwrap();
     let target : Square = Square::from_str(target_str).unwrap();
     let promotion : Option<Piece> = match promotion_str {
@@ -28,8 +28,11 @@ pub fn get_engine_move(board : &str, source_str: &str, target_str: &str, promoti
         Ok(_) => (),
         Err(_) => return "illegal move".to_string(),
     }
-    let engine_move = search::search(&result.unwrap()).unwrap();
-    let engine_result = make_move(engine_move, &result.unwrap());
+    let engine_move = search::search(&result.unwrap());
+    if engine_move == None {
+        return "no legal moves for engine".to_string();
+    }
+    let engine_result = make_move(engine_move.unwrap(), &result.unwrap());
     match engine_result {
         Ok(_) => (),
         Err(_) => panic!("engine made illegal move"),
@@ -77,5 +80,11 @@ mod tests {
             }
             Err(_) => {}
         }
+    }
+
+    #[test]
+    fn no_legal_moves() {
+        let board_fen = "8/8/8/1Q6/8/3B4/k7/6K1 w - - 0 1";
+        assert_eq!("no legal moves for engine", get_engine_move(board_fen, "d3", "c4", ""));
     }
 }

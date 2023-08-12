@@ -96,12 +96,22 @@ mod tests {
     use std::str::FromStr;
     use chess::Square;
 
+    use crate::make_move;
+
     use super::*;
 
     #[test]
     fn takes_hanging_queen() {
         let board : Board = Board::from_str("rnbqkb1r/pppppppp/5n2/8/4P1Q1/8/PPPP1PPP/RNB1KBNR b KQkq - 0 1").unwrap();
         assert_eq!(search(&board).unwrap(), ChessMove::new(Square::F6, Square::G4, None));
+    }
+    // todo: add a test that makes sure engine doesnt throw a fit when it loses
+    #[test]
+    fn loses_gracefully() { // (and legally)
+        let board = Board::from_str("8/8/8/1Q6/8/3B4/k7/6K1 w - - 0 1").unwrap();
+        let white_move = ChessMove::new(Square::from_str("d3").unwrap(), Square::from_str("c4").unwrap(), None);
+        let result = make_move(white_move, &board).unwrap();
+        assert_eq!(search(&result), None);
     }
 }
 
