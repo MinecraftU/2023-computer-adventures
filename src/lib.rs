@@ -99,8 +99,8 @@ mod tests {
     }
 
     #[test]
-    fn no_legal_moves() {
+    fn player_checkmates() {
         let board_fen = "8/8/8/1Q6/8/3B4/k7/6K1 w - - 0 1";
-        assert_eq!("no legal moves for engine", get_engine_move(board_fen, "d3", "c4", ""));
+        assert_eq!("checkmate, player won", get_engine_move(board_fen, "d3", "c4", ""));
     }
 }
