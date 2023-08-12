@@ -1,7 +1,6 @@
 use wasm_bindgen::prelude::*;
-use chess::{Piece, Color, Board, MoveGen, BoardBuilder, BoardStatus};
+use chess::{Piece, Color, Board, MoveGen, BoardStatus};
 
-use crate::make_move;
 
 #[wasm_bindgen(module="/client/js/output.js")]
 extern {

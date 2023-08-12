@@ -1,6 +1,5 @@
 use wasm_bindgen::prelude::*;
 use chess::{Board, ChessMove, MoveGen};
-
 use crate::evaluate;
 
 #[wasm_bindgen(module="/client/js/output.js")]
@@ -79,6 +78,7 @@ pub fn mini(depth : i32, board : &Board) -> f32 {
 pub fn search(board : &Board) -> Option<ChessMove> {
     let mut best_move: Option<ChessMove> = None;
     let mut max: f32 = f32::MIN;
+    // let mut move_hist = 
     for chess_move in MoveGen::new_legal(&board) {
         let mut result = *board;
         board.make_move(chess_move, &mut result);

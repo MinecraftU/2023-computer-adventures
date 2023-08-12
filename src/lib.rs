@@ -1,17 +1,9 @@
 use chess::{Piece, Board, ChessMove, Square};
 use wasm_bindgen::prelude::*;
 use std::str::FromStr;
-use std::sync::Mutex;
 
 mod search;
 mod evaluate;
-
-#[macro_use]
-extern crate lazy_static;
-
-lazy_static! {
-    static ref BOARD : Mutex<Board> = Mutex::new(Board::default());
-}
 
 #[wasm_bindgen(module="/client/js/output.js")]
 extern {
@@ -19,7 +11,8 @@ extern {
 }
 
 #[wasm_bindgen]
-pub fn get_engine_move(source_str: &str, target_str: &str, promotion_str: &str) -> String { // TODO: recieves a player move and returns an FEN containing the new position with the engine move as a response
+pub fn get_engine_move(board : &str, source_str: &str, target_str: &str, promotion_str: &str) -> String { // TODO: recieves a player move and returns an FEN containing the new position with the engine move as a response
+    let board : Board = Board::from_str(board).unwrap();
     let source : Square = Square::from_str(source_str).unwrap();
     let target : Square = Square::from_str(target_str).unwrap();
     let promotion : Option<Piece> = match promotion_str {
@@ -30,7 +23,7 @@ pub fn get_engine_move(source_str: &str, target_str: &str, promotion_str: &str) 
         _ => None,
     };
 
-    let result = make_move(ChessMove::new(source, target, promotion), &BOARD.lock().unwrap());
+    let result = make_move(ChessMove::new(source, target, promotion), &board);
     match result {
         Ok(_) => (),
         Err(_) => return "illegal move".to_string(),
@@ -41,7 +34,6 @@ pub fn get_engine_move(source_str: &str, target_str: &str, promotion_str: &str) 
         Ok(_) => (),
         Err(_) => panic!("engine made illegal move"),
     }
-    *BOARD.lock().unwrap() = engine_result.unwrap();
     return engine_result.unwrap().to_string();
 }
 
@@ -59,7 +51,6 @@ fn make_move(chess_move : ChessMove, board : &Board) -> Result<Board, &'static s
 #[cfg(test)]
 mod tests {
     use pprof;
-    use std::str::FromStr;
     use pprof::protos::Message;
     use std::fs::File;
     use std::io::Write;
@@ -70,8 +61,8 @@ mod tests {
     fn benchmark() {
         let guard = pprof::ProfilerGuard::new(1000).unwrap();
 
-        *BOARD.lock().unwrap() = Board::from_str("r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 0 1").unwrap();
-        println!("{}", get_engine_move("b1", "c3", ""));
+        let board_fen = "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 0 1";
+        println!("{}", get_engine_move(board_fen, "b1", "c3", ""));
 
         match guard.report().build() {
             Ok(report) => {

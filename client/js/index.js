@@ -49,15 +49,17 @@ let config = {
     sparepieces: true
 }
 window.board = Chessboard('myBoard', config);
+window.state = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
 function makeMove(source, target, oldPos, promo) {
     init().then(() => {
-        let engine_output = get_engine_move(source, target, promo);
+        let engine_output = get_engine_move(window.state, source, target, promo); // pass current state to engine, + user move + promotion if any
         console.log("JS: returned engine move:", engine_output);
         if (engine_output === "illegal move") {
             window.board.position(oldPos);
         } else {
             window.board.position(engine_output);
+            window.state = engine_output; // prevent extra FEN information from being thrown away
         }
     });
 }
