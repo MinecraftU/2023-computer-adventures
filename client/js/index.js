@@ -54,9 +54,23 @@ function makeMove(source, target, oldPos, promo) {
     init().then(() => {
         let engine_output = get_engine_move(source, target, promo);
         console.log("JS: returned engine move:", engine_output);
-        if (engine_output === "illegal move") {
+        switch(engine_output.split(";")[0]) {
+        case "illegal move":
             window.board.position(oldPos);
-        } else {
+            break;
+        case "stalemate":
+            window.board.position(engine_output);
+            console.log("stalemate");
+            break;
+        case "checkmate, engine won":
+            window.board.position(engine_output.split(";")[1]);
+            console.log("checkmate, engine won");
+            break;
+        case "checkmate, player won":
+            window.board.position(engine_output);
+            console.log("checkmate, player won");
+            break;
+        default:
             window.board.position(engine_output);
         }
     });
