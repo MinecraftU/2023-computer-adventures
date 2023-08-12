@@ -1,11 +1,22 @@
 use wasm_bindgen::prelude::*;
-use chess::{Piece, Color, Board, MoveGen, BoardBuilder};
+use chess::{Piece, Color, Board, MoveGen, BoardBuilder, BoardStatus};
 
 use crate::make_move;
 
 #[wasm_bindgen(module="/client/js/output.js")]
 extern {
     pub fn my_alert(s: &str);
+}
+
+fn status(board: &Board) -> f32 {
+    let status = match board.status() {
+        BoardStatus::Checkmate => 1000.0,
+        _ => 0.0
+    };
+    match board.side_to_move() {
+        Color::Black => -status,
+        Color::White => status
+    }
 }
 
 fn weight_of(piece : Piece) -> f32 {
@@ -46,7 +57,7 @@ fn mobility(board : &Board) -> f32 {
 
 // https://www.chessprogramming.org/Evaluation
 pub fn evaluate(board : &chess::Board) -> f32 { // evaluation is for black because the engine is black
-    material(board) + 0.1 * mobility(board) 
+    material(board) + 0.1 * mobility(board) + status(board)
 }
 
 #[cfg(test)]
