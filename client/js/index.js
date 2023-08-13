@@ -53,6 +53,10 @@ window.state = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
 function makeMove(source, target, oldPos, promo) {
     init().then(() => {
+        if (window.state == "checkmate, engine won" || window.state == "checkmate, player won" || window.state == "stalemate") {
+            console.log("game over");
+            return;
+        }
         let engine_output = get_engine_move(window.state, source, target, promo); // pass current state to engine, + user move + promotion if any
         console.log("JS: returned engine move:", engine_output);
         switch(engine_output.split(";")[0]) {
@@ -61,14 +65,16 @@ function makeMove(source, target, oldPos, promo) {
             break;
         case "stalemate":
             window.board.position(engine_output);
+            window.state = engine_output.split(";")[0];
             console.log("stalemate");
             break;
         case "checkmate, engine won":
             window.board.position(engine_output.split(";")[1]);
+            window.state = engine_output.split(";")[0];
             console.log("checkmate, engine won");
             break;
         case "checkmate, player won":
-            window.board.position(engine_output);
+            window.state = engine_output.split(";")[0];
             console.log("checkmate, player won");
             break;
         default:
