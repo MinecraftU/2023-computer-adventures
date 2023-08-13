@@ -30,11 +30,11 @@ jobs:
         run: cargo test --verbose
       - name: install wasm-pack
         uses: jetli/wasm-pack-action@v0.4.0
-      - name: Build wasm
-        run: wasm-pack build --target web --out-dir client/pkg
         with:
           # Optional version of wasm-pack to install(eg. 'v0.9.1', 'latest')
           version: 'latest'
+      - name: Build wasm
+        run: wasm-pack build --target web --out-dir client/pkg
   deploy:
     environment:
       name: github-pages
