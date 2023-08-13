@@ -32,7 +32,7 @@ pub fn get_engine_move(board_str : &str, source_str: &str, target_str: &str, pro
     let engine_move_option = search::search(&result.unwrap());
     if engine_move_option == None {
         if result.unwrap().checkers().popcnt() == 0 {
-            return String::from("stalemate");
+            return String::from("stalemate after player move");
         } else {
             return String::from("checkmate, player won");
         }
@@ -47,7 +47,7 @@ pub fn get_engine_move(board_str : &str, source_str: &str, target_str: &str, pro
     
     if MoveGen::new_legal(&engine_result.unwrap()).len() == 0 {
         if engine_result.unwrap().checkers().popcnt() == 0 {
-            return String::from("stalemate");
+            return format!("stalemate after engine move;{}", engine_result.unwrap().to_string());
         } else {
             return format!("checkmate, engine won;{}", engine_result.unwrap().to_string());
         }

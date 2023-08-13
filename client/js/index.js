@@ -48,39 +48,46 @@ let config = {
     onDrop: onDrop,
     sparepieces: true
 }
-window.board = Chessboard('myBoard', config);
-window.state = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+let board = Chessboard('myBoard', config);
+let state = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+
+const ending_states = ["stalemate after engine move", "stalemate after player move", "checkmate, engine won", "checkmate, player won"];
 
 function makeMove(source, target, oldPos, promo) {
-    if (window.state == "checkmate, engine won" || window.state == "checkmate, player won" || window.state == "stalemate") {
-        console.log("game over");
-        window.position(oldPos);
-        return;
-    }
     init().then(() => {
-        let engine_output = get_engine_move(window.state, source, target, promo); // pass current state to engine, + user move + promotion if any
+        // not sure why this is necessary for calling non-wasm function to work
+        if (ending_states.includes(state.split(";")[0])) {
+            console.log("game over");
+            board.position(oldPos);
+            return;
+        }
+        let engine_output = get_engine_move(state, source, target, promo); // pass current state to engine, + user move + promotion if any
         console.log("JS: returned engine move:", engine_output);
         switch (engine_output.split(";")[0]) {
             case "illegal move":
-                window.board.position(oldPos);
+                board.position(oldPos);
                 break;
-            case "stalemate":
-                window.board.position(engine_output);
-                window.state = engine_output.split(";")[0];
+            case "stalemate after engine move":
+                board.position(engine_output.split(";")[1]);
+                state = engine_output;
+                console.log("stalemate");
+                break;
+            case "stalemate after player move":
+                state = engine_output;
                 console.log("stalemate");
                 break;
             case "checkmate, engine won":
-                window.board.position(engine_output.split(";")[1]);
-                window.state = engine_output.split(";")[0];
+                board.position(engine_output.split(";")[1]);
+                state = engine_output;
                 console.log("checkmate, engine won");
                 break;
             case "checkmate, player won":
-                window.state = engine_output.split(";")[0];
+                state = engine_output;
                 console.log("checkmate, player won");
                 break;
             default:
-                window.board.position(engine_output);
-                window.state = engine_output; // prevent extra FEN information from being thrown away
+                board.position(engine_output);
+                state = engine_output; // prevent extra FEN information from being thrown away
         }
     });
 }
