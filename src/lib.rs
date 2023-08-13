@@ -59,7 +59,7 @@ pub fn get_engine_move(board_str : &str, source_str: &str, target_str: &str, pro
 fn make_move(chess_move : ChessMove, board : &Board) -> Result<Board, &'static str> {
     let mut result = *board;
     if !board.legal(chess_move) {
-        my_alert("RUST: illegal move made");
+        // my_alert("RUST: illegal move made");
         return Err("illegal move made");
     }
     board.make_move(chess_move, &mut result);
@@ -102,5 +102,11 @@ mod tests {
     fn player_checkmates() {
         let board_fen = "8/8/8/1Q6/8/3B4/k7/6K1 w - - 0 1";
         assert_eq!("checkmate, player won", get_engine_move(board_fen, "d3", "c4", ""));
+    }
+
+    #[test]
+    fn player_can_checkmate_in_1(){
+        let board_fen = "5Q2/8/2P1R3/3Q4/5K2/p4N2/P7/1k6 w - - 3 87";
+        assert_eq!("8/8/2P1R3/3Q4/5K2/Q4N2/P1k5/8 w - - 0 1", get_engine_move(board_fen, "f8", "a3", ""));
     }
 }
