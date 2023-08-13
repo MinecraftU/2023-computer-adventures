@@ -1,5 +1,5 @@
 import init, { get_engine_move } from "../pkg/chess_engine.js";
-import openGameOverModal from "./game_over.js";
+import { openGameOverModal } from "./game_over.js";
 
 document.getElementById("queenPromoButton").addEventListener("click", () => {
     handlePromotion('q')
