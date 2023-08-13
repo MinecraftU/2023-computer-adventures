@@ -100,8 +100,14 @@ mod tests {
 
     #[test]
     fn player_checkmates() {
-        let board_fen = "8/8/8/1Q6/8/3B4/k7/6K1 w - - 0 1";
-        assert_eq!("checkmate, player won", get_engine_move(board_fen, "d3", "c4", ""));
+        let board_fen = "5k2/8/4Q3/7B/8/8/8/4K3 w - - 0 1";
+        assert_eq!("checkmate, player won", get_engine_move(board_fen, "e6", "f7", ""));
+    }
+
+    #[test]
+    fn stalemate() {
+        let board_fen = "8/6Q1/8/7k/8/8/5Q2/4K3 w - - 0 1";
+        assert_eq!("stalemate after player move", get_engine_move(board_fen, "f2", "g3", ""));
     }
 
     #[test]

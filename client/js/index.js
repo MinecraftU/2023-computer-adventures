@@ -1,4 +1,5 @@
 import init, { get_engine_move } from "../pkg/chess_engine.js";
+import openGameOverModal from "./game_over.js";
 
 document.getElementById("queenPromoButton").addEventListener("click", () => {
     handlePromotion('q')
@@ -22,7 +23,7 @@ function handlePromotion(piece) {
 }
 
 function openPromotionModal() {
-    console.log("JS: open modal");
+    console.log("JS: open promotion modal");
     document.getElementById("promotionModal").style.display = "block";
 }
 
@@ -71,19 +72,23 @@ function makeMove(source, target, oldPos, promo) {
                 board.position(engine_output.split(";")[1]);
                 state = engine_output;
                 console.log("stalemate");
+                openGameOverModal("Draw by stalemate");
                 break;
             case "stalemate after player move":
                 state = engine_output;
                 console.log("stalemate");
+                openGameOverModal("Draw by stalemate");
                 break;
             case "checkmate, engine won":
                 board.position(engine_output.split(";")[1]);
                 state = engine_output;
                 console.log("checkmate, engine won");
+                openGameOverModal("Engine won by checkmate");
                 break;
             case "checkmate, player won":
                 state = engine_output;
                 console.log("checkmate, player won");
+                openGameOverModal("Player won by checkmate");
                 break;
             default:
                 board.position(engine_output);
