@@ -36,6 +36,7 @@ jobs:
       - name: Build wasm
         run: wasm-pack build --target web --out-dir client/pkg
   deploy:
+    needs: build
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
