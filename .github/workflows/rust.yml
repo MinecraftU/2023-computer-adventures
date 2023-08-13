@@ -1,4 +1,4 @@
-name: Rust
+name: Rust wasm-pack and then deploy to github pages
 
 on:
   push:
@@ -24,12 +24,13 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
       - uses: actions/checkout@v3
-      - name: Build
-        run: wasm-pack build --target web --out-dir client/pkg
       - name: Run tests
         run: cargo test --verbose
+      - name: Build wasm module
       - uses: jetli/wasm-pack-action@v0.4.0
+        run: wasm-pack build --target web --out-dir client/pkg
         with:
           # Optional version of wasm-pack to install(eg. 'v0.9.1', 'latest')
           version: 'latest'
