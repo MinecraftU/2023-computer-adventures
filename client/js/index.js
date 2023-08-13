@@ -1,4 +1,5 @@
 import init, { get_engine_move } from "../pkg/chess_engine.js";
+import openGameOverModal from "./game_over.js";
 
 document.getElementById("queenPromoButton").addEventListener("click", () => {
     handlePromotion('q')
@@ -22,7 +23,7 @@ function handlePromotion(piece) {
 }
 
 function openPromotionModal() {
-    console.log("JS: open modal");
+    console.log("JS: open promotion modal");
     document.getElementById("promotionModal").style.display = "block";
 }
 
@@ -48,30 +49,50 @@ let config = {
     onDrop: onDrop,
     sparepieces: true
 }
-window.board = Chessboard('myBoard', config);
+let board = Chessboard('myBoard', config);
+let state = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+
+const ending_states = ["stalemate after engine move", "stalemate after player move", "checkmate, engine won", "checkmate, player won"];
 
 function makeMove(source, target, oldPos, promo) {
     init().then(() => {
-        let engine_output = get_engine_move(source, target, promo);
+        // not sure why this is necessary for calling non-wasm function to work
+        if (ending_states.includes(state.split(";")[0])) {
+            console.log("game over");
+            board.position(oldPos);
+            return;
+        }
+        let engine_output = get_engine_move(state, source, target, promo); // pass current state to engine, + user move + promotion if any
         console.log("JS: returned engine move:", engine_output);
-        switch(engine_output.split(";")[0]) {
-        case "illegal move":
-            window.board.position(oldPos);
-            break;
-        case "stalemate":
-            window.board.position(engine_output);
-            console.log("stalemate");
-            break;
-        case "checkmate, engine won":
-            window.board.position(engine_output.split(";")[1]);
-            console.log("checkmate, engine won");
-            break;
-        case "checkmate, player won":
-            window.board.position(engine_output);
-            console.log("checkmate, player won");
-            break;
-        default:
-            window.board.position(engine_output);
+        switch (engine_output.split(";")[0]) {
+            case "illegal move":
+                board.position(oldPos);
+                break;
+            case "stalemate after engine move":
+                board.position(engine_output.split(";")[1]);
+                state = engine_output;
+                console.log("stalemate");
+                openGameOverModal("Draw by stalemate");
+                break;
+            case "stalemate after player move":
+                state = engine_output;
+                console.log("stalemate");
+                openGameOverModal("Draw by stalemate");
+                break;
+            case "checkmate, engine won":
+                board.position(engine_output.split(";")[1]);
+                state = engine_output;
+                console.log("checkmate, engine won");
+                openGameOverModal("Engine won by checkmate");
+                break;
+            case "checkmate, player won":
+                state = engine_output;
+                console.log("checkmate, player won");
+                openGameOverModal("Player won by checkmate");
+                break;
+            default:
+                board.position(engine_output);
+                state = engine_output; // prevent extra FEN information from being thrown away
         }
     });
 }

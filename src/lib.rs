@@ -1,17 +1,9 @@
 use chess::{Piece, Board, ChessMove, Square, MoveGen};
 use wasm_bindgen::prelude::*;
 use std::str::FromStr;
-use std::sync::Mutex;
 
 mod search;
 mod evaluate;
-
-#[macro_use]
-extern crate lazy_static;
-
-lazy_static! {
-    static ref BOARD : Mutex<Board> = Mutex::new(Board::default());
-}
 
 #[wasm_bindgen(module="/client/js/output.js")]
 extern {
@@ -19,7 +11,8 @@ extern {
 }
 
 #[wasm_bindgen]
-pub fn get_engine_move(source_str: &str, target_str: &str, promotion_str: &str) -> String { // TODO: recieves a player move and returns an FEN containing the new position with the engine move as a response
+pub fn get_engine_move(board_str : &str, source_str: &str, target_str: &str, promotion_str: &str) -> String { // TODO: recieves a player move and returns an FEN containing the new position with the engine move as a response
+    let board : Board = Board::from_str(board_str).unwrap();
     let source : Square = Square::from_str(source_str).unwrap();
     let target : Square = Square::from_str(target_str).unwrap();
     let promotion : Option<Piece> = match promotion_str {
@@ -30,7 +23,7 @@ pub fn get_engine_move(source_str: &str, target_str: &str, promotion_str: &str) 
         _ => None,
     };
 
-    let result = make_move(ChessMove::new(source, target, promotion), &BOARD.lock().unwrap());
+    let result = make_move(ChessMove::new(source, target, promotion), &board);
     match result {
         Ok(_) => (),
         Err(_) => return "illegal move".to_string(),
@@ -39,7 +32,7 @@ pub fn get_engine_move(source_str: &str, target_str: &str, promotion_str: &str) 
     let engine_move_option = search::search(&result.unwrap());
     if engine_move_option == None {
         if result.unwrap().checkers().popcnt() == 0 {
-            return String::from("stalemate");
+            return String::from("stalemate after player move");
         } else {
             return String::from("checkmate, player won");
         }
@@ -54,20 +47,19 @@ pub fn get_engine_move(source_str: &str, target_str: &str, promotion_str: &str) 
     
     if MoveGen::new_legal(&engine_result.unwrap()).len() == 0 {
         if engine_result.unwrap().checkers().popcnt() == 0 {
-            return String::from("stalemate");
+            return format!("stalemate after engine move;{}", engine_result.unwrap().to_string());
         } else {
             return format!("checkmate, engine won;{}", engine_result.unwrap().to_string());
         }
     }
 
-    *BOARD.lock().unwrap() = engine_result.unwrap();
     return engine_result.unwrap().to_string();
 }
 
 fn make_move(chess_move : ChessMove, board : &Board) -> Result<Board, &'static str> {
     let mut result = *board;
     if !board.legal(chess_move) {
-        my_alert("RUST: illegal move made");
+        // my_alert("RUST: illegal move made");
         return Err("illegal move made");
     }
     board.make_move(chess_move, &mut result);
@@ -78,7 +70,6 @@ fn make_move(chess_move : ChessMove, board : &Board) -> Result<Board, &'static s
 #[cfg(test)]
 mod tests {
     use pprof;
-    use std::str::FromStr;
     use pprof::protos::Message;
     use std::fs::File;
     use std::io::Write;
@@ -89,8 +80,8 @@ mod tests {
     fn benchmark() {
         let guard = pprof::ProfilerGuard::new(1000).unwrap();
 
-        *BOARD.lock().unwrap() = Board::from_str("r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 0 1").unwrap();
-        println!("{}", get_engine_move("b1", "c3", ""));
+        let board_fen = "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 0 1";
+        println!("{}", get_engine_move(board_fen, "b1", "c3", ""));
 
         match guard.report().build() {
             Ok(report) => {
@@ -105,5 +96,23 @@ mod tests {
             }
             Err(_) => {}
         }
+    }
+
+    #[test]
+    fn player_checkmates() {
+        let board_fen = "5k2/8/4Q3/7B/8/8/8/4K3 w - - 0 1";
+        assert_eq!("checkmate, player won", get_engine_move(board_fen, "e6", "f7", ""));
+    }
+
+    #[test]
+    fn stalemate() {
+        let board_fen = "8/6Q1/8/7k/8/8/5Q2/4K3 w - - 0 1";
+        assert_eq!("stalemate after player move", get_engine_move(board_fen, "f2", "g3", ""));
+    }
+
+    #[test]
+    fn player_can_checkmate_in_1(){
+        let board_fen = "5Q2/8/2P1R3/3Q4/5K2/p4N2/P7/1k6 w - - 3 87";
+        assert_eq!("8/8/2P1R3/3Q4/5K2/Q4N2/P1k5/8 w - - 0 1", get_engine_move(board_fen, "f8", "a3", ""));
     }
 }
