@@ -21,8 +21,10 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -35,15 +37,39 @@ jobs:
           version: 'latest'
       - name: Build wasm
         run: wasm-pack build --target web --out-dir client/pkg
+      - name: Copy wasm module artifact to gh-pages branch
+        uses: actions/upload-artifact@v3
+        with:
+          name: wasm-module
+          path: client/pkg
+          retention-days: 1
+
+
   deploy:
     needs: build
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+        with:
+          ref: gh-pages
+      - name: Download wasm module
+        uses: actions/download-artifact@v2
+        with:
+          name: wasm-module
+          path: client/pkg
+      - name: Commit
+        uses: EndBug/add-and-commit@v7
+        with:
+          author_name: spierceVR
+          author_email: 62899156+spierceVR@users.noreply.github.com
+          message: "Latest engine build - ${{ github.event.repository.updated_at}}"
+          branch: gh-pages
+          add: '[./*]'
       - name: Setup Pages
         uses: actions/configure-pages@v3
       - name: Upload artifact
@@ -54,5 +80,7 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v2
+
+
 env:
   CARGO_TERM_COLOR: always
