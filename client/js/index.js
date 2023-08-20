@@ -89,3 +89,8 @@ function makeMove(source, target, oldPos, promo) {
         }
     });
 }
+
+// for testing (for now)
+window.setBoardState = function (state) {
+    board.position(state);
+}
