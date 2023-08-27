@@ -1,0 +1,14 @@
+.github-link {
+    position: absolute;
+    right: 0;
+    top: 0;
+    padding: 10px;
+}
+
+h1 {
+    position: absolute;
+    left: 0;
+    top: 0;
+    padding: 10px;
+    margin: 0px;
+}
