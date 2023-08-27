@@ -1,17 +1,10 @@
 import init, { get_engine_move } from "../pkg/chess_engine.js";
 import { openGameOverModal } from "./game_over.js";
 
-document.getElementById("queenPromoButton").addEventListener("click", () => {
-    handlePromotion('q')
-}, false);
-document.getElementById("rookPromoButton").addEventListener("click", () => {
-    handlePromotion('r')
-}, false);
-document.getElementById("bishopPromoButton").addEventListener("click", () => {
-    handlePromotion('b')
-}, false);
-document.getElementById("knightPromoButton").addEventListener("click", () => {
-    handlePromotion('n')
+document.getElementById("promotionModal").addEventListener("click", (e) => {
+    if (e.target.tagName === "BUTTON") {
+        handlePromotion(e.target.dataset.piece);
+    }
 }, false);
 
 let promotionData;
@@ -95,4 +88,9 @@ function makeMove(source, target, oldPos, promo) {
                 state = engine_output; // prevent extra FEN information from being thrown away
         }
     });
+}
+
+// for testing (for now)
+window.setBoardState = function (state) {
+    board.position(state);
 }
