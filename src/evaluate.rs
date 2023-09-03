@@ -44,9 +44,9 @@ fn material(board : &Board) -> f32 {
 }
 
 fn mobility(board : &Board) -> f32 {
-    let black_mobility = MoveGen::new_legal(&board).len() as f32;
+    let black_mobility = MoveGen::new_legal(board).len() as f32;
     let new_board = board.null_move();
-    if new_board == None {
+    if new_board.is_none() {
         return 0.0;
     }
     let white_mobility = MoveGen::new_legal(&new_board.unwrap()).len() as f32;
