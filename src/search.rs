@@ -11,7 +11,7 @@ pub fn alpha_beta_max(mut alpha : f32, beta : f32, depth : i32, board : &Board) 
     if depth == 0 {
         return evaluate::evaluate(board);
     };
-    for chess_move in MoveGen::new_legal(&board) {
+    for chess_move in MoveGen::new_legal(board) {
         let mut result = *board;
         board.make_move(chess_move, &mut result);
         let score: f32 = alpha_beta_min(alpha, beta, depth - 1, &result);
@@ -29,7 +29,7 @@ pub fn alpha_beta_min(alpha : f32, mut beta : f32, depth : i32, board : &Board) 
     if depth == 0 {
         return evaluate::evaluate(board);
     };
-    for chess_move in MoveGen::new_legal(&board) {
+    for chess_move in MoveGen::new_legal(board) {
         let mut result = *board;
         board.make_move(chess_move, &mut result);
         let score: f32 = alpha_beta_max(alpha, beta, depth - 1, &result);
@@ -48,7 +48,7 @@ pub fn search(board : &Board) -> Option<ChessMove> {
     let mut best_move: Option<ChessMove> = None;
     let mut max: f32 = f32::MIN;
     // let mut move_hist = 
-    for chess_move in MoveGen::new_legal(&board) {
+    for chess_move in MoveGen::new_legal(board) {
         let mut result = *board;
         board.make_move(chess_move, &mut result);
         let score: f32 = alpha_beta_min(f32::MIN, f32::MAX, 3, &result);

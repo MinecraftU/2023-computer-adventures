@@ -8,9 +8,15 @@ Chess engine in Rust that compiles to WASM
 
 [View the game](https://minecraftu.github.io/2023-computer-adventures/)
 
-## compile & run instructions
+## Compile & run instructions
 
 ```
 wasm-pack build --target web --out-dir client/pkg
 cd client && python3 -m http.server
 ```
+
+## Linting
+
+`cargo clippy`
+
+Automatically apply suggestions: `cargo clippy --fix`

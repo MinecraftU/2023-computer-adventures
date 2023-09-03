@@ -1,3 +1,4 @@
+#![allow(clippy::needless_return)]
 use chess::{Piece, Board, ChessMove, Square, MoveGen};
 use wasm_bindgen::prelude::*;
 use std::str::FromStr;
@@ -30,7 +31,7 @@ pub fn get_engine_move(board_str : &str, source_str: &str, target_str: &str, pro
     }
 
     let engine_move_option = search::search(&result.unwrap());
-    if engine_move_option == None {
+    if engine_move_option.is_none() {
         if result.unwrap().checkers().popcnt() == 0 {
             return String::from("stalemate after player move");
         } else {
@@ -47,9 +48,9 @@ pub fn get_engine_move(board_str : &str, source_str: &str, target_str: &str, pro
     
     if MoveGen::new_legal(&engine_result.unwrap()).len() == 0 {
         if engine_result.unwrap().checkers().popcnt() == 0 {
-            return format!("stalemate after engine move;{}", engine_result.unwrap().to_string());
+            return format!("stalemate after engine move;{}", engine_result.unwrap());
         } else {
-            return format!("checkmate, engine won;{}", engine_result.unwrap().to_string());
+            return format!("checkmate, engine won;{}", engine_result.unwrap());
         }
     }
 
@@ -69,7 +70,7 @@ fn make_move(chess_move : ChessMove, board : &Board) -> Result<Board, &'static s
 
 #[cfg(test)]
 mod tests {
-    use pprof;
+    
     use pprof::protos::Message;
     use std::fs::File;
     use std::io::Write;
