@@ -35,7 +35,7 @@ jobs:
           version: 'latest'
       - name: Build wasm
         run: wasm-pack build --target web --out-dir client/pkg
-      - name: Copy wasm module artifact to gh-pages branch
+      - name: Copy wasm module artifact to main branch
         uses: actions/upload-artifact@v3
         with:
           name: wasm-module
@@ -54,7 +54,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
         with:
-          ref: gh-pages
+          ref: main
       - name: Download wasm module
         uses: actions/download-artifact@v2
         with:
@@ -66,7 +66,7 @@ jobs:
           author_name: spierceVR
           author_email: 62899156+spierceVR@users.noreply.github.com
           message: "Latest engine build - ${{ github.event.repository.updated_at}}"
-          branch: gh-pages
+          branch: main
           add: '[./*]'
       - name: Setup Pages
         uses: actions/configure-pages@v3
